@@ -55,7 +55,7 @@ export async function POST(request: Request) {
         }
 
         const result = await otpService.createOtp(text);
-        console.log(result);
+console.log(result);
         if (!result.success) {
             return NextResponse.json(result, { status: 400 });
         }
