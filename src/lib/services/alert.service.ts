@@ -41,7 +41,7 @@ export async function findAllAlerts() {
     const result = await db.select().from(alertTable);
     const formattedAlerts = await Promise.all(result.map(formatAlert));
     return formattedAlerts;
-} 
+}
 
 export async function formatAlert(alert: Alert) {
     const fields = await db

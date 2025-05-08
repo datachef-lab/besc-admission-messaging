@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { AuthContext } from "@/providers/auth-provider";
 import {
   InputOTP,
   InputOTPGroup,
@@ -68,6 +70,12 @@ export default function Home() {
   const [contact, setContact] = useState("");
   const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  const auth = useContext(AuthContext);
+
+  if (!auth) {
+    throw new Error("AuthContext must be used within an AuthProvider");
+  }
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,9 +111,11 @@ export default function Home() {
         body: JSON.stringify({ text: contact, code: otp }),
       });
       const data = await response.json();
-      if (data.success) {
+
+      if (response.ok) {
+        auth.login(data.accessToken, data.user);
         toast.success("Login successful!");
-        // Redirect to dashboard or handle successful login
+        router.push("/console");
       } else {
         toast.error(data.message || "Invalid OTP");
       }

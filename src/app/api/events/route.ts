@@ -1,32 +1,17 @@
 import { NextResponse } from "next/server";
 import * as eventService from "@/lib/services/event.service";
+import { getAllEvents } from "@/lib/services/event.service";
 
-export async function GET(request: Request) {
+export async function GET() {
     try {
-        const { searchParams } = new URL(request.url);
-        const id = searchParams.get("id");
-        const userId = searchParams.get("userId");
-        const alertId = searchParams.get("alertId");
-
-        if (id) {
-            const event = await eventService.findEventById(Number(id));
-            return NextResponse.json(event);
-        }
-
-        if (userId) {
-            const events = await eventService.findEventsByUserId(Number(userId));
-            return NextResponse.json(events);
-        }
-
-        if (alertId) {
-            const events = await eventService.findEventsByAlertId(Number(alertId));
-            return NextResponse.json(events);
-        }
-
-        const events = await eventService.findAllEvents();
+        const events = await getAllEvents();
         return NextResponse.json(events);
     } catch (error) {
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+        console.error("Error fetching events:", error);
+        return NextResponse.json(
+            { error: "Failed to fetch events" },
+            { status: 500 }
+        );
     }
 }
 
@@ -36,6 +21,7 @@ export async function POST(request: Request) {
         const event = await eventService.createEvent(body);
         return NextResponse.json(event, { status: 201 });
     } catch (error) {
+        console.error("Error creating event:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
@@ -53,6 +39,7 @@ export async function PUT(request: Request) {
         const event = await eventService.updateEvent(Number(id), body);
         return NextResponse.json(event);
     } catch (error) {
+        console.error("Error updating event:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
@@ -69,6 +56,7 @@ export async function DELETE(request: Request) {
         const event = await eventService.deleteEvent(Number(id));
         return NextResponse.json(event);
     } catch (error) {
+        console.error("Error deleting event:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 } 

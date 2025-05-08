@@ -1,0 +1,1 @@
+ALTER TABLE "alerts" ALTER COLUMN "template" DROP NOT NULL;

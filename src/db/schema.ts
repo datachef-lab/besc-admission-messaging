@@ -1,7 +1,7 @@
 import { relations } from "drizzle-orm";
 import { z } from "zod";
 import { createInsertSchema } from "drizzle-zod";
-import { pgTable, serial, varchar, timestamp, boolean, integer } from "drizzle-orm/pg-core";
+import { pgTable, serial, varchar, timestamp, boolean, integer, text } from "drizzle-orm/pg-core";
 
 export const userTable = pgTable("users", {
     id: serial().primaryKey(),
@@ -23,6 +23,8 @@ export type User = z.infer<typeof userTableSchema>;
 export const alertTable = pgTable("alerts", {
     id: serial().primaryKey(),
     name: varchar({ length: 255 }).notNull().unique(),
+    template: varchar({ length: 255 }).unique(),
+    previewText: text("preview_text"),
     createdAt: timestamp().defaultNow(),
     updatedAt: timestamp().defaultNow(),
 });

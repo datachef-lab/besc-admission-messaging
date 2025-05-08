@@ -29,7 +29,7 @@ export async function sendZeptoMail(
         const response = await client.sendMail({
             from: {
                 address: process.env.ZEPTO_FROM!,
-                name: "Task Flow",
+                name: "BESC Admission Communication",
             },
             to: [
                 {

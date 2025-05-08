@@ -33,6 +33,7 @@ export async function GET(request: Request) {
         }
 
         const users = await userService.findAllUsers();
+        console.log(users);
         return NextResponse.json({ success: true, data: users });
     } catch (error) {
         console.error("Error in GET /api/users:", error);

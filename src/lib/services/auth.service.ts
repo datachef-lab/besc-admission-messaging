@@ -8,15 +8,23 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcrypt';
 
 // JWT Secret should be in environment variables
-if (!process.env.JWT_SECRET) {
-    throw new Error('JWT_SECRET environment variable is required');
+if (!process.env.ACCESS_TOKEN_SECRET) {
+    throw new Error('ACCESS_TOKEN_SECRET environment variable is required');
 }
-const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-super-secret-refresh-key';
+const JWT_SECRET = process.env.ACCESS_TOKEN_SECRET!;
+const JWT_REFRESH_SECRET = process.env.REFRESH_TOKEN_SECRET!;
+
+if (!JWT_REFRESH_SECRET) {
+    throw new Error('REFRESH_TOKEN_SECRET environment variable is required');
+}
 
 // Token expiration times
-const ACCESS_TOKEN_EXPIRY = '15m'; // 15 minutes
-const REFRESH_TOKEN_EXPIRY = '7d'; // 7 days
+const ACCESS_TOKEN_EXPIRY = process.env.ACCESS_TOKEN_EXPIRY || '15m'; // 15 minutes
+const REFRESH_TOKEN_EXPIRY = process.env.REFRESH_TOKEN_EXPIRY || '7d'; // 7 days
+
+if (!ACCESS_TOKEN_EXPIRY || !REFRESH_TOKEN_EXPIRY) {
+    throw new Error('ACCESS_TOKEN_EXPIRY and REFRESH_TOKEN_EXPIRY environment variables are required');
+}
 
 // Interface for token payloads
 export interface TokenPayload {
@@ -52,8 +60,12 @@ export function generateTokens(user: User): AuthTokens {
         isAdmin: user.isAdmin
     };
 
-    const accessToken = jwt.sign(payload, JWT_SECRET, { expiresIn: ACCESS_TOKEN_EXPIRY });
-    const refreshToken = jwt.sign(payload, JWT_REFRESH_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRY });
+    const accessToken = jwt.sign(payload, JWT_SECRET, {
+        expiresIn: ACCESS_TOKEN_EXPIRY as jwt.SignOptions['expiresIn']
+    });
+    const refreshToken = jwt.sign(payload, JWT_REFRESH_SECRET, {
+        expiresIn: REFRESH_TOKEN_EXPIRY as jwt.SignOptions['expiresIn']
+    });
 
     return { accessToken, refreshToken };
 }
@@ -64,7 +76,7 @@ export function verifyAccessToken(token: string): TokenPayload | null {
         const decoded = jwt.verify(token, JWT_SECRET) as TokenPayload;
         return decoded;
     } catch (error) {
-        console.log(error)
+        console.error('Error verifying access token:', error);
         return null;
     }
 }
@@ -72,10 +84,12 @@ export function verifyAccessToken(token: string): TokenPayload | null {
 // Verify JWT refresh token
 export function verifyRefreshToken(token: string): TokenPayload | null {
     try {
+        console.log('Verifying refresh token with secret:', JWT_REFRESH_SECRET);
         const decoded = jwt.verify(token, JWT_REFRESH_SECRET) as TokenPayload;
+        console.log('Successfully decoded token:', decoded);
         return decoded;
     } catch (error) {
-        console.log(error)
+        console.error('Error verifying refresh token:', error);
         return null;
     }
 }
