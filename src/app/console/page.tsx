@@ -83,6 +83,7 @@ export default function HomePage() {
   const [eventToResend, setEventToResend] = useState<EventType | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [eventToDelete, setEventToDelete] = useState<EventType | null>(null);
+  const [excelEntryCount, setExcelEntryCount] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -527,9 +528,23 @@ export default function HomePage() {
                     id="excel-file"
                     type="file"
                     accept=".xlsx, .xls"
-                    onChange={(e) => {
-                      setExcelFile(e.target.files?.[0] || null);
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0] || null;
+                      setExcelFile(file);
                       setExcelError("");
+                      setExcelEntryCount(null);
+
+                      if (file) {
+                        const data = await file.arrayBuffer();
+                        const workbook = XLSX.read(data, { type: "array" });
+                        const sheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[sheetName];
+                        const parsedData =
+                          XLSX.utils.sheet_to_json<Record<string, string>>(
+                            worksheet
+                          );
+                        setExcelEntryCount(parsedData.length);
+                      }
                     }}
                   />
                   {excelError && (
@@ -537,15 +552,13 @@ export default function HomePage() {
                       {excelError}
                     </div>
                   )}
+                  {excelEntryCount !== null && (
+                    <div className="text-green-600 text-sm mt-1">
+                      Total entries: {excelEntryCount}
+                    </div>
+                  )}
                 </div>
                 <div className="flex justify-end gap-4 pt-4 border-t mt-8">
-                  <Button
-                    type="button"
-                    className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-8"
-                    onClick={() => {}}
-                  >
-                    Preview
-                  </Button>
                   <Button
                     type="submit"
                     className="bg-green-600 hover:bg-green-700 text-white font-semibold px-8"
