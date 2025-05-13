@@ -6,6 +6,6 @@ declare module 'zeptomail' {
             to: Array<{ email_address: { address: string; name: string } }>;
             subject: string;
             htmlbody: string;
-        }): Promise<any>;
+        }): Promise<unknown>;
     }
 } 

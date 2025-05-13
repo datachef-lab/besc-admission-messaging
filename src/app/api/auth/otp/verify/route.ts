@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import * as otpService from "@/lib/services/otp.service";
 import { findUserByEmail, findUserByWhatsapp } from "@/lib/services/user.service";
-import { generateTokens, setAuthCookies } from "@/lib/services/auth.service";
+import { generateTokens } from "@/lib/services/auth.service";
 
 export async function POST(request: Request) {
     try {

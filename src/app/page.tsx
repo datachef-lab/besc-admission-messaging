@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -70,8 +70,34 @@ export default function Home() {
   const [contact, setContact] = useState("");
   const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [timer, setTimer] = useState(180); // 3 minutes in seconds
+  const [canResend, setCanResend] = useState(false);
   const router = useRouter();
   const auth = useContext(AuthContext);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isOtpSent && timer > 0) {
+      interval = setInterval(() => {
+        setTimer((prev) => {
+          if (prev <= 1) {
+            setCanResend(true);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isOtpSent, timer]);
+
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
+  };
 
   if (!auth) {
     throw new Error("AuthContext must be used within an AuthProvider");
@@ -87,11 +113,23 @@ export default function Home() {
         body: JSON.stringify({ text: contact }),
       });
       const data = await response.json();
-      if (data.success) {
+
+      if (response.ok && data.success) {
         setIsOtpSent(true);
+        setTimer(180);
+        setCanResend(false);
         toast.success("OTP sent successfully!");
       } else {
-        toast.error(data.message || "Failed to send OTP");
+        if (data.message === "Active OTP already exists") {
+          setIsOtpSent(true);
+          setTimer(180);
+          setCanResend(false);
+          toast.info(
+            "Please use the existing OTP or wait for the timer to expire"
+          );
+        } else {
+          toast.error(data.message || "Failed to send OTP");
+        }
       }
     } catch (err) {
       console.error("Error sending OTP:", err);
@@ -200,14 +238,22 @@ export default function Home() {
                 <div className="w-full flex justify-between items-center mt-2">
                   <button
                     type="button"
-                    className="text-[#8BC34A] font-semibold underline text-base hover:text-[#689f38] transition-all"
+                    className={`font-semibold text-base transition-all ${
+                      canResend
+                        ? "text-[#8BC34A] underline hover:text-[#689f38]"
+                        : "text-gray-400"
+                    }`}
                     onClick={() => {
-                      setIsOtpSent(false);
-                      setOtp("");
+                      if (canResend) {
+                        setIsOtpSent(false);
+                        setOtp("");
+                      }
                     }}
-                    disabled={isLoading}
+                    disabled={isLoading || !canResend}
                   >
-                    Resend Code
+                    {canResend
+                      ? "Resend Code"
+                      : `Resend in ${formatTime(timer)}`}
                   </button>
                   <Button
                     type="submit"

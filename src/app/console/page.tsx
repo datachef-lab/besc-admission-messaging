@@ -25,7 +25,7 @@ import CustomModal from "@/components/CustomModal";
 import { StudentType } from "@/types/student";
 import * as XLSX from "xlsx";
 import { EventType } from "@/types/event";
-import { CheckCircle, Download } from "lucide-react";
+import { CheckCircle, Download, Trash2, RefreshCw } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -33,6 +33,16 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 
 interface Field {
   id: number;
@@ -69,6 +79,10 @@ export default function HomePage() {
   const [selectedAlert, setSelectedAlert] = useState<AlertType | null>(null);
   const [excelFile, setExcelFile] = useState<File | null>(null);
   const [excelError, setExcelError] = useState<string>("");
+  const [resendDialogOpen, setResendDialogOpen] = useState(false);
+  const [eventToResend, setEventToResend] = useState<EventType | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [eventToDelete, setEventToDelete] = useState<EventType | null>(null);
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -255,6 +269,11 @@ export default function HomePage() {
     }
   };
 
+  const handleDelete = (event: EventType) => {
+    setEventToDelete(event);
+    setDeleteDialogOpen(true);
+  };
+
   // Download all students for an event as Excel
   const handleDownloadStudents = async (eventId: number) => {
     const res = await fetch(`/api/students?eventId=${eventId}`);
@@ -266,6 +285,11 @@ export default function HomePage() {
     const worksheet = XLSX.utils.json_to_sheet(students);
     XLSX.utils.book_append_sheet(workbook, worksheet, "Students");
     XLSX.writeFile(workbook, "students.xlsx");
+  };
+
+  const handleResend = (event: EventType) => {
+    setEventToResend(event);
+    setResendDialogOpen(true);
   };
 
   if (loading) {
@@ -346,26 +370,60 @@ export default function HomePage() {
                       {event.createdAt ? String(event.createdAt) : "-"}
                     </TableCell>
                     <TableCell className="py-3 px-4">
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              size="sm"
-                              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold flex items-center gap-2"
-                              onClick={() =>
-                                typeof event.id === "number" &&
-                                handleDownloadStudents(event.id)
-                              }
-                            >
-                              <Download className="w-4 h-4" />
-                              Download
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            Download all students for this event
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+                      <div className="flex items-center gap-2">
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="text-blue-600 hover:bg-blue-100"
+                                onClick={() =>
+                                  typeof event.id === "number" &&
+                                  handleDownloadStudents(event.id)
+                                }
+                              >
+                                <Download className="w-5 h-5" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              Download all students for this event
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="text-yellow-600 hover:bg-yellow-100"
+                                onClick={() => handleResend(event)}
+                              >
+                                <RefreshCw className="w-5 h-5" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              Resend Notifications
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="text-red-600 hover:bg-red-100"
+                                onClick={() => handleDelete(event)}
+                              >
+                                <Trash2 className="w-5 h-5" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Delete this event</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -522,6 +580,9 @@ export default function HomePage() {
                       {field.name}
                     </span>
                   ))}
+                  <span className="inline-block bg-green-100 text-green-800 text-xs font-semibold px-3 py-1 rounded-full border border-green-200">
+                    WhatsApp No.
+                  </span>
                 </div>
               )}
               <div className="flex items-center justify-center w-80 h-80 bg-white rounded shadow border border-gray-100 mb-4">
@@ -545,6 +606,87 @@ export default function HomePage() {
             </div>
           </div>
         </CustomModal>
+        <AlertDialog open={resendDialogOpen} onOpenChange={setResendDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Resend Notifications</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to resend notifications for{" "}
+                <span className="font-semibold">{eventToResend?.name}</span>?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-yellow-600 hover:bg-yellow-700 text-white px-8"
+                onClick={async () => {
+                  if (!eventToResend) return;
+                  try {
+                    const res = await fetch("/api/events/resend", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ eventId: eventToResend.id }),
+                    });
+                    if (res.ok) {
+                      alert("Notifications resent!");
+                    } else {
+                      alert("Failed to resend notifications.");
+                    }
+                  } catch {
+                    alert("Error resending notifications.");
+                  } finally {
+                    setResendDialogOpen(false);
+                    setEventToResend(null);
+                  }
+                }}
+              >
+                Resend
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Event</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete{" "}
+                <span className="font-semibold">{eventToDelete?.name}</span>?
+                This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-red-600 hover:bg-red-700 text-white px-8"
+                onClick={async () => {
+                  if (!eventToDelete) return;
+                  try {
+                    const response = await fetch(
+                      `/api/events?id=${eventToDelete.id}`,
+                      {
+                        method: "DELETE",
+                      }
+                    );
+                    if (!response.ok) {
+                      alert("Unable to delete the event");
+                    }
+                    setEvents((prev) =>
+                      prev.filter((ele) => ele.id !== eventToDelete.id)
+                    );
+                  } catch {
+                    alert("Something went wrong");
+                  } finally {
+                    setDeleteDialogOpen(false);
+                    setEventToDelete(null);
+                  }
+                }}
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );

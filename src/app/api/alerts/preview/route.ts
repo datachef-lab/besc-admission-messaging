@@ -19,6 +19,7 @@ export async function GET(request: Request) {
             },
         });
     } catch (err) {
+        console.log(err);
         return NextResponse.json({ error: "Preview image not found" }, { status: 404 });
     }
 } 

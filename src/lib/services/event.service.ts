@@ -1,8 +1,10 @@
 import db from "@/db/index";
-import { eventTable, studentTable, type Event } from "@/db/schema";
+import { eventTable, studentTable, studentFieldTable, type Event, fieldTable } from "@/db/schema";
 import { EventType } from "@/types/event";
-import { eq, desc, count, and } from "drizzle-orm";
+import { eq, desc, count, and, inArray, asc } from "drizzle-orm";
 import { findAlertById } from "@/lib/services/alert.service";
+import { sendWhatsAppMessage } from "../notifications/interakt-messaging";
+import * as studentFieldService from "./student-field.service";
 
 export async function createEvent(data: Omit<Event, "id" | "createdAt" | "updatedAt">) {
     const result = await db.insert(eventTable).values(data).returning();
@@ -40,7 +42,51 @@ export async function updateEvent(id: number, data: Partial<Omit<Event, "id" | "
     return formattedEvent;
 }
 
+export async function resendNotifications(eventId: number) {
+
+    const event = await findEventById(eventId);
+
+    const students = await db.select().from(studentTable).where(eq(studentTable.eventId, eventId));
+
+    const alert = await findAlertById(event.alertId);
+
+
+    for (const st of students) {
+        // Get all fields for the event's alert in sequence order
+        const eventFields = await db
+            .select()
+            .from(fieldTable)
+            .where(eq(fieldTable.alertId, event.alertId))
+            .orderBy(asc(fieldTable.sequence));
+
+        // Get student fields with their values
+        const studentFieldValues = await studentFieldService.findStudentFieldsByStudentId(st.id);
+
+        // Create message array based on field sequence
+        const messageArr = eventFields.map(field => {
+            const studentField = studentFieldValues.find(sf => sf.fieldId === field.id);
+            return studentField?.value || '';
+        });
+
+        await sendWhatsAppMessage(st.whatsapp, messageArr, alert.template as string);
+    }
+
+}
+
 export async function deleteEvent(id: number) {
+    // 1. Find all students for the event
+    const students = await db.select().from(studentTable).where(eq(studentTable.eventId, id));
+    const studentIds = students.map(s => s.id);
+
+    // 2. Delete all student_fields for these students
+    if (studentIds.length > 0) {
+        await db.delete(studentFieldTable).where(inArray(studentFieldTable.studentId, studentIds));
+    }
+
+    // 3. Delete all students for the event
+    await db.delete(studentTable).where(eq(studentTable.eventId, id));
+
+    // 4. Delete the event itself
     const result = await db.delete(eventTable).where(eq(eventTable.id, id)).returning();
     const formattedEvent = await formatEvent(result[0]);
     return formattedEvent;

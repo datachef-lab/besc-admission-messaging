@@ -20,6 +20,7 @@ export async function GET(request: Request) {
         const fields = await fieldService.findAllFields();
         return NextResponse.json(fields);
     } catch (error) {
+        console.log(error)
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
@@ -30,6 +31,7 @@ export async function POST(request: Request) {
         const field = await fieldService.createField(body);
         return NextResponse.json(field, { status: 201 });
     } catch (error) {
+        console.log(error)
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
@@ -47,6 +49,7 @@ export async function PUT(request: Request) {
         const field = await fieldService.updateField(Number(id), body);
         return NextResponse.json(field);
     } catch (error) {
+        console.log(error)
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
@@ -63,6 +66,7 @@ export async function DELETE(request: Request) {
         const field = await fieldService.deleteField(Number(id));
         return NextResponse.json(field);
     } catch (error) {
+        console.log(error)
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 } 

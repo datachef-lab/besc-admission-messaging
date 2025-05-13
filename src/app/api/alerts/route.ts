@@ -20,6 +20,7 @@ export async function GET(request: Request) {
         const alerts = await alertService.findAllAlerts();
         return NextResponse.json(alerts);
     } catch (error) {
+        console.log(error)
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
@@ -30,6 +31,7 @@ export async function POST(request: Request) {
         const alert = await alertService.createAlert(body);
         return NextResponse.json(alert, { status: 201 });
     } catch (error) {
+        console.log(error)
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
@@ -47,6 +49,7 @@ export async function PUT(request: Request) {
         const alert = await alertService.updateAlert(Number(id), body);
         return NextResponse.json(alert);
     } catch (error) {
+        console.log(error)
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
@@ -63,6 +66,7 @@ export async function DELETE(request: Request) {
         const alert = await alertService.deleteAlert(Number(id));
         return NextResponse.json(alert);
     } catch (error) {
+        console.log(error)
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 } 

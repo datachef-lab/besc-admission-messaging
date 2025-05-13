@@ -38,7 +38,7 @@ export async function createOtp(text: string) {
     const result = await db.insert(otpTable).values({
         userId: user.id,
         code,
-        expiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes expiry
+        expiresAt: new Date(Date.now() + 3 * 60 * 1000), // 10 minutes expiry
     }).returning();
 
     // Send notifications

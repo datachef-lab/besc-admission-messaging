@@ -16,6 +16,22 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+    // If the request is to /api/events/resend, handle it separately
+    const url = new URL(request.url);
+    if (url.pathname.endsWith('/resend')) {
+        try {
+            const body = await request.json();
+            const { eventId } = body;
+            if (!eventId) {
+                return NextResponse.json({ error: "eventId is required" }, { status: 400 });
+            }
+            await eventService.resendNotifications(Number(eventId));
+            return NextResponse.json({ success: true });
+        } catch (error) {
+            console.error("Error resending notifications:", error);
+            return NextResponse.json({ error: "Failed to resend notifications" }, { status: 500 });
+        }
+    }
     try {
         const body = await request.json();
         const event = await eventService.createEvent(body);
