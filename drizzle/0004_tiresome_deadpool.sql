@@ -1,0 +1,1 @@
+ALTER TABLE "fields" ADD COLUMN "frequecy" integer DEFAULT 1 NOT NULL;

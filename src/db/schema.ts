@@ -41,6 +41,7 @@ export const fieldTable = pgTable("fields", {
     name: varchar({ length: 255 }).notNull(),
     sequence: integer().notNull(),
     flag: boolean().default(true),
+    frequecy: integer().default(1).notNull(),
     createdAt: timestamp().defaultNow(),
     updatedAt: timestamp().defaultNow(),
 });

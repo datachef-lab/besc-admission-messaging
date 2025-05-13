@@ -58,10 +58,13 @@ export async function createStudent(data: CreateStudentData) {
     const studentFieldValues = await studentFieldService.findStudentFieldsByStudentId(student.id);
 
     // Create message array based on field sequence
-    const messageArr = eventFields.map(field => {
-        const studentField = studentFieldValues.find(sf => sf.fieldId === field.id);
-        return studentField?.value || '';
-    });
+    const messageArr: string[] = [];
+
+    for (let i = 0; i < eventFields.length; i++) {
+        const studentField = studentFieldValues.find(sf => sf.fieldId === eventFields[i].id);
+        messageArr.push(studentField?.value || '');
+    }
+
 
     // Send the WhatsApp message to the student
 

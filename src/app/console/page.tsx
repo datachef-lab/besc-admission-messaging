@@ -280,6 +280,7 @@ export default function HomePage() {
 
     // Extract field names for headers
     const headers = selectedAlert.fields.map((field) => field.name);
+    headers.push("WhatsApp No.");
 
     // Create worksheet from headers only (as first row)
     const worksheet = XLSX.utils.aoa_to_sheet([headers]);

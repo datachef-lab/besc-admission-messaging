@@ -67,11 +67,12 @@ export async function resendNotifications(eventId: number) {
         // Get student fields with their values
         const studentFieldValues = await studentFieldService.findStudentFieldsByStudentId(st.id);
 
-        // Create message array based on field sequence
-        const messageArr = eventFields.map(field => {
-            const studentField = studentFieldValues.find(sf => sf.fieldId === field.id);
-            return studentField?.value || '';
-        });
+        const messageArr: string[] = [];
+
+        for (let i = 0; i < eventFields.length; i++) {
+            const studentField = studentFieldValues.find(sf => sf.fieldId === eventFields[i].id);
+            messageArr.push(studentField?.value || '');
+        }
 
         await sendWhatsAppMessage(st.whatsapp, messageArr, alert.template as string);
     }
