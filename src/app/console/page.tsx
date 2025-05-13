@@ -1,5 +1,5 @@
 "use client";
-
+import { saveAs } from "file-saver";
 import { useEffect, useState } from "react";
 import {
   Table,
@@ -275,6 +275,28 @@ export default function HomePage() {
     setDeleteDialogOpen(true);
   };
 
+  const handleDownloadTemplate = () => {
+    if (!selectedAlert) return;
+
+    // Extract field names for headers
+    const headers = selectedAlert.fields.map((field) => field.name);
+
+    // Create worksheet from headers only (as first row)
+    const worksheet = XLSX.utils.aoa_to_sheet([headers]);
+
+    // Create a new workbook and append the worksheet
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Template");
+
+    // Generate a buffer and save as .xlsx
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+    const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
+    saveAs(blob, `${selectedAlert.template}-template.xlsx`);
+  };
+
   // Download all students for an event as Excel
   const handleDownloadStudents = async (eventId: number) => {
     const res = await fetch(`/api/students?eventId=${eventId}`);
@@ -445,7 +467,7 @@ export default function HomePage() {
         <CustomModal open={dialogOpen} onClose={closeDialog}>
           <div className="flex flex-col md:flex-row min-h-[500px]">
             {/* Left: Form */}
-            <div className="flex-1 p-8 bg-white rounded-l-2xl flex flex-col justify-center">
+            <div className="flex-1 p-8 w-1/3 bg-white rounded-l-2xl flex flex-col justify-center">
               <h2 className="text-2xl font-bold mb-6">Event Alert</h2>
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Event Name */}
@@ -518,12 +540,25 @@ export default function HomePage() {
                 </div>
                 {/* Upload Excel File */}
                 <div>
-                  <label
-                    htmlFor="excel-file"
-                    className="block text-sm font-medium mb-1"
-                  >
-                    Upload Excel File <span className="text-red-500">*</span>
-                  </label>
+                  <div className="flex justify-between">
+                    <label
+                      htmlFor="excel-file"
+                      className="block text-sm font-medium mb-1"
+                    >
+                      Upload Excel File <span className="text-red-500">*</span>
+                    </label>
+                    {selectedAlert && (
+                      <Button
+                        type="button"
+                        onClick={handleDownloadTemplate}
+                        variant={"link"}
+                        className="text-purple-500 "
+                        size={"sm"}
+                      >
+                        Get Template
+                      </Button>
+                    )}
+                  </div>
                   <Input
                     id="excel-file"
                     type="file"
@@ -574,7 +609,7 @@ export default function HomePage() {
             {/* Divider */}
             <div className="w-px bg-gray-200 mx-0 md:mx-0" />
             {/* Right: Alert Preview */}
-            <div className="w-full md:w-96 flex flex-col items-center justify-center bg-gray-50 rounded-r-2xl p-8">
+            <div className="w-2/3 flex flex-col items-center justify-center bg-gray-50 rounded-r-2xl p-8">
               <div className="mb-4 w-full text-center">
                 <div className="text-lg font-semibold text-gray-700">
                   {selectedAlert?.name}
@@ -583,7 +618,7 @@ export default function HomePage() {
                   {selectedAlert?.name}
                 </div>
               </div>
-              {selectedAlert && selectedAlert.fields.length > 0 && (
+              {/* {selectedAlert && selectedAlert.fields.length > 0 && (
                 <div className="mb-4 w-full flex flex-wrap justify-center gap-2">
                   {selectedAlert.fields.map((field) => (
                     <span
@@ -597,8 +632,8 @@ export default function HomePage() {
                     WhatsApp No.
                   </span>
                 </div>
-              )}
-              <div className="flex items-center justify-center w-80 h-80 bg-white rounded shadow border border-gray-100 mb-4">
+              )} */}
+              <div className="flex items-center justify-center bg-white rounded shadow border border-gray-100 mb-4">
                 <Image
                   src={
                     selectedAlert?.template
@@ -606,8 +641,8 @@ export default function HomePage() {
                       : "/event-illustration.png"
                   }
                   alt="Event Illustration"
-                  width={320}
-                  height={320}
+                  width={550}
+                  height={350}
                   className="rounded"
                 />
               </div>
