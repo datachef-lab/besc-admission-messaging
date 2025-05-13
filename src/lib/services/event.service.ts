@@ -56,7 +56,12 @@ export async function resendNotifications(eventId: number) {
         const eventFields = await db
             .select()
             .from(fieldTable)
-            .where(eq(fieldTable.alertId, event.alertId))
+            .where(
+                and(
+                    eq(fieldTable.alertId, event.alertId),
+                    eq(fieldTable.flag, true),
+                )
+            )
             .orderBy(asc(fieldTable.sequence));
 
         // Get student fields with their values

@@ -40,6 +40,7 @@ export const fieldTable = pgTable("fields", {
     alertId: integer("alert_id_fk").references(() => alertTable.id).notNull(),
     name: varchar({ length: 255 }).notNull(),
     sequence: integer().notNull(),
+    flag: boolean().default(true),
     createdAt: timestamp().defaultNow(),
     updatedAt: timestamp().defaultNow(),
 });
@@ -92,7 +93,7 @@ export const studentTable = pgTable("students", {
     whatsapp: varchar({ length: 255 }).notNull(),
     notificationSuccess: boolean("notification_success").default(false),
     createdAt: timestamp().defaultNow(),
-    updatedAt: timestamp().defaultNow().$onUpdate(() => new Date()) ,
+    updatedAt: timestamp().defaultNow().$onUpdate(() => new Date()),
 });
 
 export const studentTableRelations = relations(studentTable, ({ one }) => ({

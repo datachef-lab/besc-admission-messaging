@@ -1,6 +1,6 @@
 import db from "@/db/index";
 import { studentTable, type Student, fieldTable, eventTable, alertTable } from "@/db/schema";
-import { eq, asc, inArray } from "drizzle-orm";
+import { eq, asc, inArray, and } from "drizzle-orm";
 import { sendWhatsAppMessage } from "../notifications/interakt-messaging";
 import * as studentFieldService from "./student-field.service";
 
@@ -46,7 +46,12 @@ export async function createStudent(data: CreateStudentData) {
     const eventFields = await db
         .select()
         .from(fieldTable)
-        .where(eq(fieldTable.alertId, event.alertId))
+        .where(
+            and(
+                eq(fieldTable.alertId, event.alertId),
+                eq(fieldTable.flag, true),
+            )
+        )
         .orderBy(asc(fieldTable.sequence));
 
     // Get student fields with their values
