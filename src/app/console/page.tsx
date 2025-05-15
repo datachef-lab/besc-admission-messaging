@@ -279,7 +279,10 @@ export default function HomePage() {
     if (!selectedAlert) return;
 
     // Extract field names for headers
-    const headers = selectedAlert.fields.map((field) => field.name);
+    const headers = selectedAlert.fields
+      .slice() // create a shallow copy to avoid mutating original array
+      .sort((a, b) => a.sequence - b.sequence)
+      .map((field) => field.name);
     headers.push("WhatsApp No.");
 
     // Create worksheet from headers only (as first row)
