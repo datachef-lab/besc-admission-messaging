@@ -197,7 +197,11 @@ export default function HomePage() {
         const worksheet = workbook.Sheets[sheetName];
         const parsedData = XLSX.utils.sheet_to_json<Record<string, string>>(
           worksheet,
-          { raw: false }
+          {
+            raw: false,
+            
+            ...({ cellDates: true } as unknown as XLSX.Sheet2JSONOpts),
+          }
         );
 
         // --- Header validation ---
